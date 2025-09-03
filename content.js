@@ -108,15 +108,107 @@ class YouTubeVocalExtractor {
       }
 
       // Show progress notification
-      this.showUserNotification('🔄 Downloading audio from YouTube...', 'info');
+      this.showUserNotification('🔄 Extracting audio from video...', 'info');
       
-      // Call backend to download audio
-      await this.downloadAudioFromBackend(currentUrl, quality);
+      // Try client-side extraction first
+      try {
+        await this.extractAudioFromVideoElement();
+      } catch (error) {
+        console.log('Client-side extraction failed, trying backend...', error);
+        // Fallback to backend
+        await this.downloadAudioFromBackend(currentUrl, quality);
+      }
 
     } catch (error) {
       console.error('Error downloading audio:', error);
       this.showInstallFailed(`Download failed: ${error.message}`);
     }
+  }
+
+  async extractAudioFromVideoElement() {
+    try {
+      // Find the video element
+      const video = document.querySelector('video');
+      if (!video) {
+        throw new Error('No video element found');
+      }
+
+      // Get video source
+      const videoSrc = video.src || video.currentSrc;
+      if (!videoSrc) {
+        throw new Error('No video source found');
+      }
+
+      console.log('Found video source:', videoSrc);
+
+      // Create audio context
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // Fetch the video as array buffer
+      const response = await fetch(videoSrc);
+      const arrayBuffer = await response.arrayBuffer();
+      
+      // Decode audio data
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      
+      // Convert to WAV
+      const wavBlob = this.audioBufferToWav(audioBuffer);
+      
+      // Download
+      const url = URL.createObjectURL(wavBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'youtube_audio.wav';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      this.showUserNotification('✅ Audio extracted successfully!', 'success');
+      
+    } catch (error) {
+      console.error('Video element extraction failed:', error);
+      throw error;
+    }
+  }
+
+  audioBufferToWav(buffer) {
+    const length = buffer.length;
+    const sampleRate = buffer.sampleRate;
+    const arrayBuffer = new ArrayBuffer(44 + length * 2);
+    const view = new DataView(arrayBuffer);
+    
+    // WAV header
+    const writeString = (offset, string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + length * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, length * 2, true);
+    
+    // Convert float samples to 16-bit PCM
+    const channelData = buffer.getChannelData(0);
+    let offset = 44;
+    for (let i = 0; i < length; i++) {
+      const sample = Math.max(-1, Math.min(1, channelData[i]));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+      offset += 2;
+    }
+    
+    return new Blob([arrayBuffer], { type: 'audio/wav' });
   }
 
   showDownloadInstructions() {
