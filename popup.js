@@ -192,9 +192,8 @@ class PopupController {
       formData.append('audioFile', this.selectedFile);
 
       // Send to backend for vocal separation with progress streaming
-      // For local development: 'https://youtube-vocal-extractor.onrender.com/api/separate-vocals'
-      // For production: 'https://your-app.railway.app/api/separate-vocals'
-      const response = await fetch('https://youtube-vocal-extractor.onrender.com/api/separate-vocals', {
+      // Using local server
+      const response = await fetch('http://localhost:3000/api/separate-vocals', {
         method: 'POST',
         body: formData
       });
@@ -262,9 +261,8 @@ class PopupController {
 
   async downloadSeparatedFile(filename) {
     try {
-      // For local development: 'https://youtube-vocal-extractor.onrender.com/api/download-separated/'
-      // For production: 'https://your-app.railway.app/api/download-separated/'
-      const response = await fetch(`https://youtube-vocal-extractor.onrender.com/api/download-separated/${filename}`);
+      // Using local server
+      const response = await fetch(`http://localhost:3000/api/download-separated/${filename}`);
       
       if (!response.ok) {
         throw new Error(`Download failed: ${response.status}`);
