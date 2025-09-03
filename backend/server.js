@@ -117,8 +117,20 @@ app.post('/api/video-info', async (req, res) => {
       return res.status(400).json({ error: 'Invalid YouTube URL' });
     }
 
-    // Get video info
-    const info = await ytdl.getInfo(url);
+    // Get video info with bot detection avoidance
+    const info = await ytdl.getInfo(url, {
+      requestOptions: {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate',
+          'DNT': '1',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
+        }
+      }
+    });
     const videoDetails = info.videoDetails;
 
     res.json({
@@ -159,8 +171,20 @@ app.post('/api/download-audio', async (req, res) => {
       return res.status(400).json({ error: 'Invalid YouTube URL' });
     }
 
-    // Get video info
-    const info = await ytdl.getInfo(url);
+    // Get video info with bot detection avoidance
+    const info = await ytdl.getInfo(url, {
+      requestOptions: {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate',
+          'DNT': '1',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
+        }
+      }
+    });
     const videoDetails = info.videoDetails;
     
     // Generate clean filename using video title
@@ -173,10 +197,21 @@ app.post('/api/download-audio', async (req, res) => {
 
     console.log(`Starting audio download for: ${videoDetails.title}`);
 
-    // Download audio stream
+    // Download audio stream with bot detection avoidance
     const audioStream = ytdl(url, {
       quality: quality === 'highest' ? 'highestaudio' : 'lowestaudio',
-      filter: 'audioonly'
+      filter: 'audioonly',
+      requestOptions: {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate',
+          'DNT': '1',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
+        }
+      }
     });
 
     // Convert to MP3 using ffmpeg
@@ -266,7 +301,18 @@ app.post('/api/download-video', async (req, res) => {
     console.log(`Starting video download for: ${videoDetails.title}`);
 
     const videoStream = ytdl(url, {
-      quality: quality === 'highest' ? 'highest' : 'lowest'
+      quality: quality === 'highest' ? 'highest' : 'lowest',
+      requestOptions: {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate',
+          'DNT': '1',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1'
+        }
+      }
     });
 
     await new Promise((resolve, reject) => {
