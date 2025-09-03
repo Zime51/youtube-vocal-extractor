@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "echo 'Build completed'",
-    "postinstall": "echo 'Dependencies installed'"
+    "postinstall": "echo 'Dependencies installed'",
+    "railway:start": "node server.js"
   },
   "dependencies": {
     "ytdl-core": "^4.11.5",
