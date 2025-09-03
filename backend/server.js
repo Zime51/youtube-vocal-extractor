@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const ytdl = require('ytdl-core');
+const { Innertube } = require('youtubei.js');
 const ffmpeg = require('fluent-ffmpeg');
 const multer = require('multer');
 const axios = require('axios');
@@ -59,8 +59,78 @@ function getBotEvasionHeaders() {
     'Upgrade-Insecure-Requests': '1',
     'DNT': '1',
     'Connection': 'keep-alive',
-    'Referer': 'https://www.youtube.com/'
+    'Referer': 'https://www.youtube.com/',
+    'Origin': 'https://www.youtube.com',
+    'X-Forwarded-For': '127.0.0.1',
+    'X-Real-IP': '127.0.0.1'
   };
+}
+
+// YouTube downloader using youtubei.js (more resistant to bot detection)
+let youtube = null;
+
+async function initializeYouTube() {
+  if (!youtube) {
+    youtube = await Innertube.create();
+  }
+  return youtube;
+}
+
+async function downloadWithYouTubeI(url, quality) {
+  try {
+    const yt = await initializeYouTube();
+    
+    // Extract video ID from URL
+    const videoId = url.match(/[?&]v=([^&]+)/)?.[1];
+    if (!videoId) {
+      throw new Error('Invalid YouTube URL');
+    }
+    
+    // Get video info
+    const info = await yt.getInfo(videoId);
+    const videoDetails = info.basic_info;
+    
+    // Find audio stream
+    const audioStreams = info.streaming_data?.adaptive_formats?.filter(format => 
+      format.mime_type?.includes('audio') && !format.mime_type?.includes('video')
+    ) || [];
+    
+    if (audioStreams.length === 0) {
+      throw new Error('No audio streams found');
+    }
+    
+    // Select best audio quality
+    const selectedStream = quality === 'highest' 
+      ? audioStreams.reduce((best, current) => 
+          (current.bitrate || 0) > (best.bitrate || 0) ? current : best
+        )
+      : audioStreams.reduce((worst, current) => 
+          (current.bitrate || 0) < (worst.bitrate || 0) ? current : worst
+        );
+    
+    if (!selectedStream) {
+      throw new Error('No suitable audio stream found');
+    }
+    
+    // Download the audio stream
+    const response = await axios.get(selectedStream.url, {
+      responseType: 'stream',
+      headers: {
+        'User-Agent': getRandomUserAgent(),
+        'Referer': 'https://www.youtube.com/',
+        'Origin': 'https://www.youtube.com'
+      }
+    });
+    
+    return {
+      stream: response.data,
+      title: videoDetails.title,
+      duration: videoDetails.duration?.seconds
+    };
+    
+  } catch (error) {
+    throw new Error(`YouTube download failed: ${error.message}`);
+  }
 }
 
 const app = express();
@@ -196,41 +266,29 @@ app.post('/api/download-audio', async (req, res) => {
       return res.status(400).json({ error: 'URL is required' });
     }
 
-    // Validate YouTube URL
-    if (!ytdl.validateURL(url)) {
+    // Basic YouTube URL validation
+    if (!url.includes('youtube.com/watch') && !url.includes('youtu.be/')) {
       return res.status(400).json({ error: 'Invalid YouTube URL' });
     }
 
-    // Get video info with bot detection avoidance
-    const info = await ytdl.getInfo(url, {
-      requestOptions: {
-        headers: getBotEvasionHeaders()
-      }
-    });
-    const videoDetails = info.videoDetails;
+    console.log(`Starting audio download for: ${url}`);
+
+    // Use youtubei.js for downloading (more resistant to bot detection)
+    const downloadResult = await downloadWithYouTubeI(url, quality);
     
     // Generate clean filename using video title
-    const cleanTitle = videoDetails.title
+    const cleanTitle = downloadResult.title
       .replace(/[^a-zA-Z0-9\s-_]/g, '') // Remove special characters except spaces, hyphens, underscores
       .replace(/\s+/g, '_') // Replace spaces with underscores
       .substring(0, 60); // Limit length
     const filename = `${cleanTitle}.mp3`;
     tempFilePath = path.join(downloadsDir, filename);
 
-    console.log(`Starting audio download for: ${videoDetails.title}`);
-
-    // Download audio stream with bot detection avoidance
-    const audioStream = ytdl(url, {
-      quality: quality === 'highest' ? 'highestaudio' : 'lowestaudio',
-      filter: 'audioonly',
-      requestOptions: {
-        headers: getBotEvasionHeaders()
-      }
-    });
+    console.log(`Converting audio to MP3: ${filename}`);
 
     // Convert to MP3 using ffmpeg
     await new Promise((resolve, reject) => {
-      ffmpeg(audioStream)
+      ffmpeg(downloadResult.stream)
         .audioBitrate(320)
         .audioChannels(2)
         .audioFrequency(44100)
