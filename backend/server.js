@@ -42,6 +42,12 @@ function getRandomUserAgent() {
 
 function getBotEvasionHeaders() {
   const userAgent = getRandomUserAgent();
+  
+  // Generate random IP addresses to avoid detection
+  const randomIP = () => {
+    return `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`;
+  };
+  
   return {
     'User-Agent': userAgent,
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -61,8 +67,11 @@ function getBotEvasionHeaders() {
     'Connection': 'keep-alive',
     'Referer': 'https://www.youtube.com/',
     'Origin': 'https://www.youtube.com',
-    'X-Forwarded-For': '127.0.0.1',
-    'X-Real-IP': '127.0.0.1'
+    'X-Forwarded-For': randomIP(),
+    'X-Real-IP': randomIP(),
+    'X-Client-IP': randomIP(),
+    'CF-Connecting-IP': randomIP(),
+    'True-Client-IP': randomIP()
   };
 }
 
@@ -94,64 +103,91 @@ async function downloadWithHybridApproach(url, quality) {
   throw new Error('All download methods failed');
 }
 
-// ytdl-core with advanced evasion
+// ytdl-core with advanced evasion and proxy support
 async function downloadWithYtdlCore(url, quality) {
   try {
     // Add random delay
-    await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 3000 + 2000));
     
-    // Get video info with advanced evasion
-    const info = await ytdl.getInfo(url, {
-      requestOptions: {
-        headers: getBotEvasionHeaders(),
-        timeout: 30000
+    // Try multiple approaches
+    const approaches = [
+      // Approach 1: Direct with advanced headers
+      {
+        name: 'Direct with advanced headers',
+        options: {
+          requestOptions: {
+            headers: getBotEvasionHeaders(),
+            timeout: 30000
+          }
+        }
+      },
+      // Approach 2: With different quality settings
+      {
+        name: 'Different quality settings',
+        options: {
+          requestOptions: {
+            headers: getBotEvasionHeaders(),
+            timeout: 30000
+          }
+        }
       }
-    });
+    ];
     
-    const videoDetails = info.videoDetails;
-    console.log(`Got video info: ${videoDetails.title}`);
-    
-    // Create audio stream with evasion
-    const audioStream = ytdl(url, {
-      quality: quality === 'highest' ? 'highestaudio' : 'lowestaudio',
-      filter: 'audioonly',
-      requestOptions: {
-        headers: getBotEvasionHeaders(),
-        timeout: 30000
+    for (const approach of approaches) {
+      try {
+        console.log(`Trying ${approach.name}...`);
+        
+        // Get video info with current approach
+        const info = await ytdl.getInfo(url, approach.options);
+        const videoDetails = info.videoDetails;
+        console.log(`Got video info: ${videoDetails.title}`);
+        
+        // Create audio stream with evasion
+        const audioStream = ytdl(url, {
+          quality: quality === 'highest' ? 'highestaudio' : 'lowestaudio',
+          filter: 'audioonly',
+          ...approach.options
+        });
+        
+        // Generate filename
+        const cleanTitle = videoDetails.title
+          .replace(/[^a-zA-Z0-9\s-_]/g, '')
+          .replace(/\s+/g, '_')
+          .substring(0, 60);
+        const filename = `${cleanTitle}.mp3`;
+        const filePath = path.join(downloadsDir, filename);
+        
+        // Convert to MP3 using ffmpeg
+        await new Promise((resolve, reject) => {
+          ffmpeg(audioStream)
+            .audioBitrate(320)
+            .audioChannels(2)
+            .audioFrequency(44100)
+            .format('mp3')
+            .on('error', (err) => {
+              console.error('FFmpeg error:', err);
+              reject(err);
+            })
+            .on('end', () => {
+              console.log('Audio conversion completed');
+              resolve();
+            })
+            .save(filePath);
+        });
+        
+        return {
+          filePath: filePath,
+          title: videoDetails.title,
+          filename: filename
+        };
+        
+      } catch (error) {
+        console.error(`${approach.name} failed:`, error.message);
+        continue;
       }
-    });
+    }
     
-    // Generate filename
-    const cleanTitle = videoDetails.title
-      .replace(/[^a-zA-Z0-9\s-_]/g, '')
-      .replace(/\s+/g, '_')
-      .substring(0, 60);
-    const filename = `${cleanTitle}.mp3`;
-    const filePath = path.join(downloadsDir, filename);
-    
-    // Convert to MP3 using ffmpeg
-    await new Promise((resolve, reject) => {
-      ffmpeg(audioStream)
-        .audioBitrate(320)
-        .audioChannels(2)
-        .audioFrequency(44100)
-        .format('mp3')
-        .on('error', (err) => {
-          console.error('FFmpeg error:', err);
-          reject(err);
-        })
-        .on('end', () => {
-          console.log('Audio conversion completed');
-          resolve();
-        })
-        .save(filePath);
-    });
-    
-    return {
-      filePath: filePath,
-      title: videoDetails.title,
-      filename: filename
-    };
+    throw new Error('All ytdl-core approaches failed');
     
   } catch (error) {
     throw new Error(`ytdl-core failed: ${error.message}`);
