@@ -107,11 +107,11 @@ class YouTubeVocalExtractor {
         return;
       }
 
-      // Show user-friendly message about YouTube restrictions
-      this.showUserNotification('⚠️ YouTube blocks direct audio downloads. Please use the "Upload Audio File" option instead!', 'info');
+      // Show progress notification
+      this.showUserNotification('🔄 Downloading audio from YouTube...', 'info');
       
-      // Provide instructions for getting audio files
-      this.showDownloadInstructions();
+      // Call backend to download audio
+      await this.downloadAudioFromBackend(currentUrl, quality);
 
     } catch (error) {
       console.error('Error downloading audio:', error);
@@ -119,57 +119,7 @@ class YouTubeVocalExtractor {
     }
   }
 
-  showDownloadInstructions() {
-    const instructions = document.createElement('div');
-    instructions.style.cssText = `
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #2c3e50;
-      color: white;
-      padding: 30px;
-      border-radius: 12px;
-      font-family: Arial, sans-serif;
-      font-size: 16px;
-      z-index: 10000;
-      max-width: 500px;
-      text-align: center;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      border: 2px solid #3498db;
-    `;
-    
-    instructions.innerHTML = `
-      <div style="font-size: 20px; margin-bottom: 15px; color: #3498db;">📋 How to Get Audio Files</div>
-      <div style="font-size: 14px; margin-bottom: 20px; line-height: 1.5;">
-        YouTube blocks direct downloads, but you can still use this extension!<br><br>
-        <strong>Option 1:</strong> Use a desktop YouTube downloader (like yt-dlp, 4K Video Downloader, etc.)<br><br>
-        <strong>Option 2:</strong> Use online YouTube to MP3 converters<br><br>
-        <strong>Option 3:</strong> Use the "Upload Audio File" button in the extension popup
-      </div>
-      <div style="font-size: 12px; margin-bottom: 20px; opacity: 0.8;">
-        Once you have an MP3 file, upload it to extract vocals and instrumentals!
-      </div>
-      <button onclick="this.parentElement.remove()" style="
-        background: #3498db;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-      ">Got it!</button>
-    `;
-    
-    document.body.appendChild(instructions);
-    
-    // Auto-remove after 15 seconds
-    setTimeout(() => {
-      if (instructions.parentNode) {
-        instructions.parentNode.removeChild(instructions);
-      }
-    }, 15000);
-  }
+
 
   async downloadAudioFromBackend(youtubeUrl, quality) {
     try {
