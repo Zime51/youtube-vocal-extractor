@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "build": "echo 'Build completed'",
+    "postinstall": "echo 'Dependencies installed'"
   },
   "dependencies": {
     "ytdl-core": "^4.11.5",

@@ -297,11 +297,53 @@ setInterval(() => {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch
   });
+});
+
+// Debug endpoint to check what's available
+app.get('/api/debug', async (req, res) => {
+  try {
+    const { spawn } = require('child_process');
+    
+    // Check if ffmpeg is available
+    let ffmpegAvailable = false;
+    try {
+      const ffmpegCheck = spawn('ffmpeg', ['-version']);
+      ffmpegCheck.on('close', (code) => {
+        ffmpegAvailable = code === 0;
+      });
+    } catch (e) {
+      ffmpegAvailable = false;
+    }
+    
+    // Test ytdl-core
+    let ytdlTest = 'Not tested';
+    try {
+      const testUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+      const info = await ytdl.getInfo(testUrl);
+      ytdlTest = 'Working - got video info';
+    } catch (error) {
+      ytdlTest = `Failed: ${error.message}`;
+    }
+    
+    res.json({
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch,
+      ffmpegAvailable: ffmpegAvailable,
+      ytdlTest: ytdlTest,
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Get video info endpoint
