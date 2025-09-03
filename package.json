@@ -1,12 +1,27 @@
 {
   "name": "youtube-vocal-extractor",
   "version": "1.0.0",
-  "description": "YouTube Vocal Extractor Chrome Extension",
+  "description": "YouTube Vocal Extractor Chrome Extension Backend",
+  "main": "backend/server.js",
   "scripts": {
-    "start": "cd backend && node server.js",
-    "install": "cd backend && npm install"
+    "start": "cd backend && npm start",
+    "install": "cd backend && npm install",
+    "build": "cd backend && npm install"
   },
   "engines": {
-    "node": "16.20.0"
-  }
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zime51/youtube-vocal-extractor.git"
+  },
+  "keywords": [
+    "youtube",
+    "audio",
+    "vocal",
+    "extraction",
+    "chrome-extension"
+  ],
+  "author": "Walter Chao",
+  "license": "MIT"
 }
