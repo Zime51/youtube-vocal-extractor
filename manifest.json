@@ -15,8 +15,7 @@
     "https://*.youtube.com/*",
     "https://*.googlevideo.com/*",
     "http://localhost:3000/*",
-    "https://localhost:3000/*",
-    "https://youtube-vocal-extractor.onrender.com/*"
+    "https://localhost:3000/*"
   ],
   "background": {
     "service_worker": "background.js",

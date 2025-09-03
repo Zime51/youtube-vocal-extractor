@@ -113,16 +113,10 @@ class YouTubeVocalExtractor {
       }
 
       // Show progress notification
-      this.showUserNotification('🔄 Extracting audio from video...', 'info');
+      this.showUserNotification('🔄 Downloading audio from YouTube...', 'info');
       
-      // Try client-side extraction first
-      try {
-        await this.extractAudioFromVideoElement();
-      } catch (error) {
-        console.log('Client-side extraction failed, trying backend...', error);
-        // Fallback to backend
-        await this.downloadAudioFromBackend(currentUrl, quality);
-      }
+      // Use local backend server
+      await this.downloadAudioFromBackend(currentUrl, quality);
 
     } catch (error) {
       console.error('Error downloading audio:', error);
@@ -275,10 +269,8 @@ class YouTubeVocalExtractor {
       // Show loading notification
       this.showUserNotification('Downloading audio from YouTube...', 'info');
       
-      // Backend service URL (update this to your actual backend URL)
-      // For local development: 'https://youtube-vocal-extractor.onrender.com/api/download-audio'
-      // For production: 'https://your-app.railway.app/api/download-audio'
-      const backendUrl = 'https://youtube-vocal-extractor.onrender.com/api/download-audio';
+      // Backend service URL - using local server
+      const backendUrl = 'http://localhost:3000/api/download-audio';
       
       // Send request to backend
       const response = await fetch(backendUrl, {
