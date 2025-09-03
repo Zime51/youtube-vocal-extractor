@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const { spawn } = require('child_process');
+const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
 const multer = require('multer');
 const axios = require('axios');
@@ -66,12 +66,104 @@ function getBotEvasionHeaders() {
   };
 }
 
-// YouTube downloader using third-party API (like successful extensions do)
+// Hybrid YouTube downloader with multiple fallback methods
+async function downloadWithHybridApproach(url, quality) {
+  const methods = [
+    {
+      name: 'ytdl-core with advanced evasion',
+      fn: () => downloadWithYtdlCore(url, quality)
+    },
+    {
+      name: 'Third-party API fallback',
+      fn: () => downloadWithThirdPartyAPI(url, quality)
+    }
+  ];
+  
+  for (const method of methods) {
+    try {
+      console.log(`Trying ${method.name} for: ${url}`);
+      const result = await method.fn();
+      console.log(`Success with ${method.name}`);
+      return result;
+    } catch (error) {
+      console.error(`${method.name} failed:`, error.message);
+      continue;
+    }
+  }
+  
+  throw new Error('All download methods failed');
+}
+
+// ytdl-core with advanced evasion
+async function downloadWithYtdlCore(url, quality) {
+  try {
+    // Add random delay
+    await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
+    
+    // Get video info with advanced evasion
+    const info = await ytdl.getInfo(url, {
+      requestOptions: {
+        headers: getBotEvasionHeaders(),
+        timeout: 30000
+      }
+    });
+    
+    const videoDetails = info.videoDetails;
+    console.log(`Got video info: ${videoDetails.title}`);
+    
+    // Create audio stream with evasion
+    const audioStream = ytdl(url, {
+      quality: quality === 'highest' ? 'highestaudio' : 'lowestaudio',
+      filter: 'audioonly',
+      requestOptions: {
+        headers: getBotEvasionHeaders(),
+        timeout: 30000
+      }
+    });
+    
+    // Generate filename
+    const cleanTitle = videoDetails.title
+      .replace(/[^a-zA-Z0-9\s-_]/g, '')
+      .replace(/\s+/g, '_')
+      .substring(0, 60);
+    const filename = `${cleanTitle}.mp3`;
+    const filePath = path.join(downloadsDir, filename);
+    
+    // Convert to MP3 using ffmpeg
+    await new Promise((resolve, reject) => {
+      ffmpeg(audioStream)
+        .audioBitrate(320)
+        .audioChannels(2)
+        .audioFrequency(44100)
+        .format('mp3')
+        .on('error', (err) => {
+          console.error('FFmpeg error:', err);
+          reject(err);
+        })
+        .on('end', () => {
+          console.log('Audio conversion completed');
+          resolve();
+        })
+        .save(filePath);
+    });
+    
+    return {
+      filePath: filePath,
+      title: videoDetails.title,
+      filename: filename
+    };
+    
+  } catch (error) {
+    throw new Error(`ytdl-core failed: ${error.message}`);
+  }
+}
+
+// Third-party API fallback
 async function downloadWithThirdPartyAPI(url, quality) {
   try {
-    console.log(`Starting download via third-party API for: ${url}`);
+    console.log(`Trying third-party API for: ${url}`);
     
-    // Use a free YouTube downloader API service
+    // Use a different API service
     const apiUrl = 'https://api.vevioz.com/api/button/mp3/320';
     
     const response = await axios.post(apiUrl, {
@@ -81,20 +173,23 @@ async function downloadWithThirdPartyAPI(url, quality) {
     }, {
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': getRandomUserAgent()
+        'User-Agent': getRandomUserAgent(),
+        'Referer': 'https://www.youtube.com/'
       },
-      timeout: 60000 // 60 second timeout
+      timeout: 30000
     });
     
     if (response.data && response.data.url) {
       console.log('Got download URL from API:', response.data.url);
       
-      // Download the file from the API response
+      // Download the file
       const fileResponse = await axios.get(response.data.url, {
         responseType: 'stream',
         headers: {
-          'User-Agent': getRandomUserAgent()
-        }
+          'User-Agent': getRandomUserAgent(),
+          'Referer': 'https://www.youtube.com/'
+        },
+        timeout: 60000
       });
       
       // Generate filename
@@ -108,7 +203,7 @@ async function downloadWithThirdPartyAPI(url, quality) {
       
       return new Promise((resolve, reject) => {
         writer.on('finish', () => {
-          console.log('File downloaded successfully:', filename);
+          console.log('File downloaded successfully via API:', filename);
           resolve({
             filePath: filePath,
             title: `YouTube Audio ${videoId}`,
@@ -127,8 +222,7 @@ async function downloadWithThirdPartyAPI(url, quality) {
     }
     
   } catch (error) {
-    console.error('Third-party API download failed:', error.message);
-    throw new Error(`API download failed: ${error.message}`);
+    throw new Error(`Third-party API failed: ${error.message}`);
   }
 }
 
@@ -272,8 +366,8 @@ app.post('/api/download-audio', async (req, res) => {
 
     console.log(`Starting audio download for: ${url}`);
 
-    // Use third-party API for downloading (like successful extensions)
-    const downloadResult = await downloadWithThirdPartyAPI(url, quality);
+    // Use hybrid approach with multiple fallback methods
+    const downloadResult = await downloadWithHybridApproach(url, quality);
     
     tempFilePath = downloadResult.filePath;
     const filename = downloadResult.filename;
