@@ -1,30 +1,12 @@
 {
   "name": "youtube-vocal-extractor",
   "version": "1.0.0",
-  "description": "Chrome extension for extracting vocals from YouTube videos",
-  "main": "background.js",
+  "description": "YouTube Vocal Extractor Chrome Extension",
   "scripts": {
-    "build": "echo 'No build process required for Chrome extension'",
-    "test": "echo 'No tests specified'",
-    "lint": "echo 'No linting configured'"
+    "start": "cd backend && node server.js",
+    "install": "cd backend && npm install"
   },
-  "keywords": [
-    "chrome-extension",
-    "youtube",
-    "audio-processing",
-    "vocal-extraction",
-    "web-audio-api"
-  ],
-  "author": "Your Name",
-  "license": "MIT",
-  "devDependencies": {},
-  "dependencies": {},
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/yourusername/youtube-vocal-extractor.git"
-  },
-  "bugs": {
-    "url": "https://github.com/yourusername/youtube-vocal-extractor/issues"
-  },
-  "homepage": "https://github.com/yourusername/youtube-vocal-extractor#readme"
+  "engines": {
+    "node": ">=16.0.0"
+  }
 }
