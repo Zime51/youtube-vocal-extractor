@@ -5,7 +5,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
-const { Innertube } = require('youtubei.js');
+const { spawn } = require('child_process');
 const ffmpeg = require('fluent-ffmpeg');
 const multer = require('multer');
 const axios = require('axios');
@@ -66,70 +66,69 @@ function getBotEvasionHeaders() {
   };
 }
 
-// YouTube downloader using youtubei.js (more resistant to bot detection)
-let youtube = null;
-
-async function initializeYouTube() {
-  if (!youtube) {
-    youtube = await Innertube.create();
-  }
-  return youtube;
-}
-
-async function downloadWithYouTubeI(url, quality) {
+// YouTube downloader using third-party API (like successful extensions do)
+async function downloadWithThirdPartyAPI(url, quality) {
   try {
-    const yt = await initializeYouTube();
+    console.log(`Starting download via third-party API for: ${url}`);
     
-    // Extract video ID from URL
-    const videoId = url.match(/[?&]v=([^&]+)/)?.[1];
-    if (!videoId) {
-      throw new Error('Invalid YouTube URL');
-    }
+    // Use a free YouTube downloader API service
+    const apiUrl = 'https://api.vevioz.com/api/button/mp3/320';
     
-    // Get video info
-    const info = await yt.getInfo(videoId);
-    const videoDetails = info.basic_info;
-    
-    // Find audio stream
-    const audioStreams = info.streaming_data?.adaptive_formats?.filter(format => 
-      format.mime_type?.includes('audio') && !format.mime_type?.includes('video')
-    ) || [];
-    
-    if (audioStreams.length === 0) {
-      throw new Error('No audio streams found');
-    }
-    
-    // Select best audio quality
-    const selectedStream = quality === 'highest' 
-      ? audioStreams.reduce((best, current) => 
-          (current.bitrate || 0) > (best.bitrate || 0) ? current : best
-        )
-      : audioStreams.reduce((worst, current) => 
-          (current.bitrate || 0) < (worst.bitrate || 0) ? current : worst
-        );
-    
-    if (!selectedStream) {
-      throw new Error('No suitable audio stream found');
-    }
-    
-    // Download the audio stream
-    const response = await axios.get(selectedStream.url, {
-      responseType: 'stream',
+    const response = await axios.post(apiUrl, {
+      url: url,
+      format: 'mp3',
+      quality: quality === 'highest' ? '320' : '128'
+    }, {
       headers: {
-        'User-Agent': getRandomUserAgent(),
-        'Referer': 'https://www.youtube.com/',
-        'Origin': 'https://www.youtube.com'
-      }
+        'Content-Type': 'application/json',
+        'User-Agent': getRandomUserAgent()
+      },
+      timeout: 60000 // 60 second timeout
     });
     
-    return {
-      stream: response.data,
-      title: videoDetails.title,
-      duration: videoDetails.duration?.seconds
-    };
+    if (response.data && response.data.url) {
+      console.log('Got download URL from API:', response.data.url);
+      
+      // Download the file from the API response
+      const fileResponse = await axios.get(response.data.url, {
+        responseType: 'stream',
+        headers: {
+          'User-Agent': getRandomUserAgent()
+        }
+      });
+      
+      // Generate filename
+      const videoId = url.match(/[?&]v=([^&]+)/)?.[1] || 'youtube_audio';
+      const filename = `youtube_${videoId}.mp3`;
+      const filePath = path.join(downloadsDir, filename);
+      
+      // Save the file
+      const writer = fs.createWriteStream(filePath);
+      fileResponse.data.pipe(writer);
+      
+      return new Promise((resolve, reject) => {
+        writer.on('finish', () => {
+          console.log('File downloaded successfully:', filename);
+          resolve({
+            filePath: filePath,
+            title: `YouTube Audio ${videoId}`,
+            filename: filename
+          });
+        });
+        
+        writer.on('error', (error) => {
+          console.error('Error writing file:', error);
+          reject(error);
+        });
+      });
+      
+    } else {
+      throw new Error('No download URL received from API');
+    }
     
   } catch (error) {
-    throw new Error(`YouTube download failed: ${error.message}`);
+    console.error('Third-party API download failed:', error.message);
+    throw new Error(`API download failed: ${error.message}`);
   }
 }
 
@@ -273,36 +272,13 @@ app.post('/api/download-audio', async (req, res) => {
 
     console.log(`Starting audio download for: ${url}`);
 
-    // Use youtubei.js for downloading (more resistant to bot detection)
-    const downloadResult = await downloadWithYouTubeI(url, quality);
+    // Use third-party API for downloading (like successful extensions)
+    const downloadResult = await downloadWithThirdPartyAPI(url, quality);
     
-    // Generate clean filename using video title
-    const cleanTitle = downloadResult.title
-      .replace(/[^a-zA-Z0-9\s-_]/g, '') // Remove special characters except spaces, hyphens, underscores
-      .replace(/\s+/g, '_') // Replace spaces with underscores
-      .substring(0, 60); // Limit length
-    const filename = `${cleanTitle}.mp3`;
-    tempFilePath = path.join(downloadsDir, filename);
+    tempFilePath = downloadResult.filePath;
+    const filename = downloadResult.filename;
 
-    console.log(`Converting audio to MP3: ${filename}`);
-
-    // Convert to MP3 using ffmpeg
-    await new Promise((resolve, reject) => {
-      ffmpeg(downloadResult.stream)
-        .audioBitrate(320)
-        .audioChannels(2)
-        .audioFrequency(44100)
-        .format('mp3')
-        .on('error', (err) => {
-          console.error('FFmpeg error:', err);
-          reject(err);
-        })
-        .on('end', () => {
-          console.log('Audio conversion completed');
-          resolve();
-        })
-        .save(tempFilePath);
-    });
+    console.log(`Download completed: ${filename}`);
 
     // Check if file was created successfully
     if (!fs.existsSync(tempFilePath)) {

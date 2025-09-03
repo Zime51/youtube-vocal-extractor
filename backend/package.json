@@ -8,7 +8,6 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "youtubei.js": "^6.8.0",
     "axios": "^1.11.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
