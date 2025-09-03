@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# Logs
+*.log
+backend/server.log
+
+# Downloads
+backend/downloads/*.mp3
+backend/downloads/*.webm
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Environment files
+.env
+backend/.env
