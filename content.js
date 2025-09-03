@@ -1,15 +1,20 @@
 // Content script for YouTube Vocal Extractor
+console.log('YouTube Vocal Extractor content script loaded');
+
 class YouTubeVocalExtractor {
   constructor() {
+    console.log('YouTubeVocalExtractor constructor called');
     this.isProcessing = false;
     this.currentVideoId = null;
     this.init();
   }
 
   init() {
+    console.log('YouTubeVocalExtractor init() called');
     // Listen for messages from popup
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       console.log('Content script received message:', request.action);
+      console.log('Request:', request);
       
       try {
         if (request.action === 'extractVocals') {
@@ -726,10 +731,14 @@ class YouTubeVocalExtractor {
 }
 
 // Initialize the extractor when the page loads
+console.log('Initializing YouTubeVocalExtractor...');
 if (document.readyState === 'loading') {
+  console.log('Document still loading, waiting for DOMContentLoaded');
   document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded fired, creating YouTubeVocalExtractor');
     new YouTubeVocalExtractor();
   });
 } else {
+  console.log('Document already loaded, creating YouTubeVocalExtractor immediately');
   new YouTubeVocalExtractor();
 }
