@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+age instea#!/usr/bin/env python3
 import base64
 from PIL import Image, ImageDraw
 
@@ -28,7 +28,7 @@ def create_icon(size):
     mic_x = center - mic_width // 2
     mic_y = center - mic_height // 2
     
-    # Draw microphone body
+    # Draw microphone bodyzi
     draw.rectangle([mic_x, mic_y, mic_x + mic_width, mic_y + mic_height], 
                    fill=(255, 255, 255, 200), outline=(255, 255, 255, 255), width=2)
     

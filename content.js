@@ -126,9 +126,9 @@ class YouTubeVocalExtractor {
       this.showUserNotification('Downloading audio from YouTube...', 'info');
       
       // Backend service URL (update this to your actual backend URL)
-      // For local development: 'http://localhost:3000/api/download-audio'
+      // For local development: 'https://youtube-vocal-extractor.onrender.com/api/download-audio'
       // For production: 'https://your-app.railway.app/api/download-audio'
-      const backendUrl = 'http://localhost:3000/api/download-audio';
+      const backendUrl = 'https://youtube-vocal-extractor.onrender.com/api/download-audio';
       
       // Send request to backend
       const response = await fetch(backendUrl, {
