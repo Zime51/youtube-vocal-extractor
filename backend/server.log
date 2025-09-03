@@ -1,0 +1,101 @@
+🚀 YouTube Audio Backend Server running on port 3000
+📁 Downloads directory: /Users/walterchao/youtube-vocal-extractor/backend/downloads
+🔗 Health check: http://localhost:3000/api/health
+Starting audio download for: Martin Garrix & Lauv - MAD (Lyrics)
+Audio conversion completed
+Audio file created: Martin_Garrix_Lauv_-_MAD_Lyrics.mp3 (8011275 bytes)
+Sending file with filename: Martin_Garrix_Lauv_-_MAD_Lyrics.mp3
+Content-Disposition header set to: attachment; filename="Martin_Garrix_Lauv_-_MAD_Lyrics.mp3"
+Cleaned up file: Martin_Garrix_Lauv_-_MAD_Lyrics.mp3
+Processing uploaded file: Martin_Garrix_Lauv_-_MAD_Lyrics.mp3
+Starting LALAL.AI vocal separation...
+Using API key: aa4c...
+Uploading file to LALAL.AI...
+Upload response: {
+  "status": "success",
+  "id": "d469ddca-2d34-4f25-9710-43e7321dba68",
+  "name": "Martin_Garrix_Lauv_-_MAD_Lyrics.mp3",
+  "size": 8011275,
+  "duration": 200,
+  "expires": 1756958876
+}
+File uploaded successfully. ID: d469ddca-2d34-4f25-9710-43e7321dba68
+Starting vocal separation task...
+Split params: [{"id":"d469ddca-2d34-4f25-9710-43e7321dba68","stem":"vocals"}]
+Split response: {
+  "status": "success",
+  "task_id": "85c84b16-8baf-4373-8e06-765afe20b40e"
+}
+Split task started successfully
+Waiting for processing to complete...
+Check attempt 1: success
+Progress: 0%
+Check attempt 2: success
+Progress: 4%
+Check attempt 3: success
+Progress: 8%
+Check attempt 4: success
+Progress: 13%
+Check attempt 5: success
+Progress: 17%
+Check attempt 6: success
+Progress: 21%
+Check attempt 7: success
+Processing completed successfully!
+Downloading vocals from: https://d.lalal.ai/media/split/d469ddca-2d34-4f25-9710-43e7321dba68/85c84b16-8baf-4373-8e06-765afe20b40e/vocals
+Saving vocals to: /Users/walterchao/youtube-vocal-extractor/backend/downloads/Martin_Garrix_Lauv_-_MAD_Lyrics_vocals.mp3
+Downloading instrumentals from: https://d.lalal.ai/media/split/d469ddca-2d34-4f25-9710-43e7321dba68/85c84b16-8baf-4373-8e06-765afe20b40e/no_vocals
+Saving instrumentals to: /Users/walterchao/youtube-vocal-extractor/backend/downloads/Martin_Garrix_Lauv_-_MAD_Lyrics_instrumentals.mp3
+Download completed: 1/2
+Download completed: 2/2
+All downloads completed successfully!
+Processing uploaded file: Martin_Garrix_Lauv_-_MAD_Lyrics.mp3
+Starting LALAL.AI vocal separation...
+Using API key: aa4c...
+Uploading file to LALAL.AI...
+Upload response: {
+  "status": "success",
+  "id": "cec6fe57-529f-4829-a66b-20611b040a16",
+  "name": "Martin_Garrix_Lauv_-_MAD_Lyrics.mp3",
+  "size": 8011275,
+  "duration": 200,
+  "expires": 1756958935
+}
+File uploaded successfully. ID: cec6fe57-529f-4829-a66b-20611b040a16
+Starting vocal separation task...
+Split params: [{"id":"cec6fe57-529f-4829-a66b-20611b040a16","stem":"vocals"}]
+Split response: {
+  "status": "success",
+  "task_id": "8c5ff6db-2950-40a8-88c7-ea744b248320"
+}
+Split task started successfully
+Waiting for processing to complete...
+Check attempt 1: success
+Progress: 0%
+Check attempt 2: success
+Progress: 4%
+Check attempt 3: success
+Progress: 8%
+Check attempt 4: success
+Progress: 12%
+Check attempt 5: success
+Progress: 17%
+Check attempt 6: success
+Progress: 21%
+Check attempt 7: success
+Processing completed successfully!
+Downloading vocals from: https://d.lalal.ai/media/split/cec6fe57-529f-4829-a66b-20611b040a16/8c5ff6db-2950-40a8-88c7-ea744b248320/vocals
+Saving vocals to: /Users/walterchao/youtube-vocal-extractor/backend/downloads/Martin_Garrix_Lauv_-_MAD_Lyrics_vocals.mp3
+Downloading instrumentals from: https://d.lalal.ai/media/split/cec6fe57-529f-4829-a66b-20611b040a16/8c5ff6db-2950-40a8-88c7-ea744b248320/no_vocals
+Saving instrumentals to: /Users/walterchao/youtube-vocal-extractor/backend/downloads/Martin_Garrix_Lauv_-_MAD_Lyrics_instrumentals.mp3
+Download completed: 1/2
+Download completed: 2/2
+All downloads completed successfully!
+Download request for: Martin_Garrix_Lauv_-_MAD_Lyrics_vocals.mp3
+File path: /Users/walterchao/youtube-vocal-extractor/backend/downloads/Martin_Garrix_Lauv_-_MAD_Lyrics_vocals.mp3
+File exists: true
+Download request for: Martin_Garrix_Lauv_-_MAD_Lyrics_instrumentals.mp3
+File path: /Users/walterchao/youtube-vocal-extractor/backend/downloads/Martin_Garrix_Lauv_-_MAD_Lyrics_instrumentals.mp3
+File exists: true
+Cleaned up file: Martin_Garrix_Lauv_-_MAD_Lyrics_vocals.mp3
+Cleaned up file: Martin_Garrix_Lauv_-_MAD_Lyrics_instrumentals.mp3
